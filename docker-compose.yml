@@ -1,0 +1,55 @@
+version: '3'
+services:
+
+    #PHP Service
+    app-post:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: bitnami/php-fpm:8.0
+        container_name: app-post
+        restart: unless-stopped
+        tty: true
+        environment:
+            SERVICE_NAME: app
+            SERVICE_TAGS: dev
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+        networks:
+            - post-network
+        depends_on:
+            - db-post
+
+    #Nginx Service
+    webserver-post:
+        image: nginx:alpine
+        container_name: webserver-post
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "80:80"
+        volumes:
+            - ./:/var/www
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+        networks:
+            - post-network
+
+    db-post:
+        image: postgres
+        container_name: database-post
+        ports:
+            - 5433:5432
+        environment:
+            POSTGRES_DB: web
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        networks:
+            - post-network
+
+
+
+#Docker Networks
+networks:
+    post-network:
+        driver: bridge
